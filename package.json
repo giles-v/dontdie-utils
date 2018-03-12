@@ -1,0 +1,24 @@
+{
+  "name": "dontdie-utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "migrate": "node -r @std/esm migrate/index.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/giles-v/dontdie-utils.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/giles-v/dontdie-utils/issues"
+  },
+  "homepage": "https://github.com/giles-v/dontdie-utils#readme",
+  "dependencies": {
+    "@std/esm": "^0.25.2",
+    "contentful": "^5.1.3"
+  }
+}
