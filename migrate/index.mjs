@@ -1,4 +1,14 @@
 import {
+  createAuthor,
+  createPost,
+  deleteAllAssets,
+  deleteAllEntries,
+  getAllAssets,
+  getAllEntries,
+  getAuthorWithName,
+  getOrUploadAsset
+} from "./contentful";
+import {
   getTags,
   getUsers,
   getPostsTags,
@@ -7,15 +17,86 @@ import {
 } from "./extract-data";
 import { requireJSON } from "./utils";
 
-const data = requireJSON("./dont-die.ghost.2018-02-12.json").db[0].data;
+const importUsers = async users => {
+  for (let user of users) {
+    console.log("  Adding author", user.name);
+    try {
+      await createAuthor(user);
+    } catch (e) {
+      console.log("  Failed to create author", user.name, e.message.message);
+    }
+  }
+};
 
-const posts_tags = getPostsTags(data);
-const users = getUsers(data);
-const tags = getTags(data);
-const pages = getPages(data);
-const posts = getPosts(data);
+const getAuthorByGhostId = async (users, id) => {
+  const user = users.filter(user => user.id === id).pop();
+  return await getAuthorWithName(user.name);
+};
 
-console.log("How many users?", users.length);
-console.log("How many tags?", tags.length);
-console.log("How many posts?", posts.length);
-console.log("How many pages?", pages.length);
+const getTagArray = (post_id, tags, posts_tags) => {
+  const tag_ids = posts_tags
+    .filter(posts_tag => posts_tag.post_id === post_id)
+    .map(posts_tag => posts_tag.tag_id);
+
+  const tag_names = tags
+    .filter(tag => tag_ids.includes(tag.id))
+    .map(tag => tag.name.replace(",", ""));
+
+  return tag_names;
+};
+
+const importPosts = async (posts, users, tags, posts_tags) => {
+  for (let post of posts) {
+    try {
+      const author = await getAuthorByGhostId(users, post.author_id);
+      const tagArray = await getTagArray(post.id, tags, posts_tags);
+
+      /**
+       * To fix:
+       * Featured image
+       * Publish date
+       * SEO meta
+       * Inline images
+       */
+
+      await createPost(post, author, tagArray);
+      console.log("  Created post", post.title);
+    } catch (e) {
+      console.log("  Failed to create post", post.title, e.message);
+    }
+    return;
+  }
+};
+
+async function run() {
+  const data = requireJSON("./dont-die.ghost.2018-02-12.json").db[0].data;
+
+  const posts_tags = getPostsTags(data);
+  const users = getUsers(data);
+  const tags = getTags(data);
+  const pages = getPages(data);
+  const posts = getPosts(data);
+
+  console.log(`Retrieved data from Ghost.
+    Users: ${users.length}
+    Tags: ${tags.length}
+    Posts: ${posts.length}
+    Pages: ${pages.length}
+
+Starting import to Contentful...`);
+  console.log("");
+
+  console.log("Deleting existing entries and assets...");
+  await deleteAllEntries("post");
+  // await deleteAllAssets();
+
+  console.log("");
+  console.log("Creating authors...");
+  // await importUsers(users);
+
+  console.log("");
+  console.log("Creating posts...");
+  await importPosts(posts, users, tags, posts_tags);
+}
+
+run();

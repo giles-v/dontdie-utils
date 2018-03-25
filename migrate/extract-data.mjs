@@ -1,4 +1,4 @@
-import { resolveImage, resolveMarkdownImages } from "./ghost-utils";
+import { resolveImage, resolveMarkdown } from "./ghost-utils";
 
 export const getPages = data =>
   data.posts.filter(post => post.page).map(post => {
@@ -16,7 +16,7 @@ export const getPages = data =>
       id,
       title,
       slug,
-      markdown: resolveMarkdownImages(mobiledoc),
+      markdown: resolveMarkdown(mobiledoc),
       html,
       image: resolveImage(feature_image),
       status,
@@ -40,8 +40,7 @@ export const getPosts = data =>
       id,
       title,
       slug,
-      markdown: resolveMarkdownImages(mobiledoc),
-      html,
+      body: resolveMarkdown(mobiledoc),
       image: resolveImage(feature_image),
       status,
       author_id
