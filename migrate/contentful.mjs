@@ -136,7 +136,7 @@ export const getOrUploadAsset = async fileUri => {
   });
 
   if (existingAsset) {
-    console.log("Resolved to existing asset", item.sys.id);
+    console.log("Resolved to existing asset", existingAsset.sys.id);
     return existingAsset;
   }
 
@@ -162,6 +162,10 @@ export const getOrUploadAsset = async fileUri => {
   console.log("Publishing asset...");
   const newAsset = await processedAsset.publish();
   console.log("Uploaded and published asset", newAsset.sys.id);
+
+  // refresh this data
+  assetList.push(newAsset);
+
   return newAsset;
 };
 
@@ -171,22 +175,36 @@ export const getOrUploadAsset = async fileUri => {
  * @param data object of post data.
  * @returns promise resolving to the author ID.
  */
-export const createAuthor = ({ name, email, bio, image }) => {
-  const fields = {
+export const createAuthor = async (user, defaultAvatar) => {
+  const { name, email, bio, image } = user;
+
+  const data = formatFields({
     name,
     email,
     biography: bio
+  });
+
+  let avatar = defaultAvatar;
+  if (image) {
+    avatar = await getOrUploadAsset(image);
+  }
+  data.fields.profilePhoto = {
+    "en-US": {
+      sys: {
+        type: "Link",
+        linkType: "Asset",
+        id: avatar.sys.id
+      }
+    }
   };
 
-  if (image) {
-    fields.profilePhoto = getOrUploadAsset(image);
-  }
+  const contentType = CONTENT_TYPE_IDS.author;
 
-  return getClientSpace()
-    .then(space =>
-      space.createEntry(CONTENT_TYPE_IDS.author, formatFields(fields))
-    )
-    .then(entry => entry.publish());
+  const space = await getClientSpace();
+  let entry = await space.createEntry(contentType, data);
+
+  entry = await entry.publish();
+  return entry;
 };
 
 /**
@@ -194,13 +212,14 @@ export const createAuthor = ({ name, email, bio, image }) => {
  *
  * @param data object of post data.
  */
-export const createPost = async (post, author, tags) => {
-  const { title, slug, body } = post;
+export const createPost = async (post, author, tags, featuredImageAsset) => {
+  const { title, slug, body, date } = post;
+  const comments = false;
 
-  const space = await getClientSpace();
+  const body2 = "Lorem Ipsum dolor sit amet";
 
   const contentType = CONTENT_TYPE_IDS.post;
-  const data = formatFields({ title, slug, body, tags });
+  const data = formatFields({ title, slug, body: body2, tags, date, comments });
 
   data.fields.author = {
     "en-US": [
@@ -214,6 +233,17 @@ export const createPost = async (post, author, tags) => {
     ]
   };
 
+  data.fields.featuredImage = {
+    "en-US": {
+      sys: {
+        type: "Link",
+        linkType: "Asset",
+        id: featuredImageAsset.sys.id
+      }
+    }
+  };
+
+  const space = await getClientSpace();
   let entry = await space.createEntry(contentType, data);
 
   entry = await entry.publish();

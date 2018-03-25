@@ -33,15 +33,18 @@ export const getPosts = data =>
       mobiledoc,
       html,
       feature_image,
+      published_at,
       status,
       author_id
     } = post;
+
     return {
       id,
       title,
       slug,
       body: resolveMarkdown(mobiledoc),
       image: resolveImage(feature_image),
+      date: published_at,
       status,
       author_id
     };

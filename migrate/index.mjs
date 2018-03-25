@@ -21,9 +21,12 @@ const importUsers = async users => {
   for (let user of users) {
     console.log("  Adding author", user.name);
     try {
-      await createAuthor(user);
+      const defaultAvatar = await getOrUploadAsset(
+        "https://nodontdie.com/content/images/2017/11/DontDieWhite.png"
+      );
+      await createAuthor(user, defaultAvatar);
     } catch (e) {
-      console.log("  Failed to create author", user.name, e.message.message);
+      console.log("  Failed to create author", user.name, e.message);
     }
   }
 };
@@ -50,16 +53,15 @@ const importPosts = async (posts, users, tags, posts_tags) => {
     try {
       const author = await getAuthorByGhostId(users, post.author_id);
       const tagArray = await getTagArray(post.id, tags, posts_tags);
+      const featuredImageAsset = await getOrUploadAsset(post.image);
 
       /**
        * To fix:
-       * Featured image
-       * Publish date
        * SEO meta
        * Inline images
        */
 
-      await createPost(post, author, tagArray);
+      await createPost(post, author, tagArray, featuredImageAsset);
       console.log("  Created post", post.title);
     } catch (e) {
       console.log("  Failed to create post", post.title, e.message);
@@ -88,10 +90,9 @@ Starting import to Contentful...`);
 
   console.log("Deleting existing entries and assets...");
   await deleteAllEntries("post");
-  // await deleteAllAssets();
 
-  console.log("");
-  console.log("Creating authors...");
+  // console.log("");
+  // console.log("Creating authors...");
   // await importUsers(users);
 
   console.log("");
