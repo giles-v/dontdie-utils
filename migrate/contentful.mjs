@@ -13,6 +13,7 @@ const CONTENT_TYPE_IDS = {
   page: "page",
   post: "2wKn6yEnZewu2SCCkus4as"
 };
+const MAX_BODY_LENGTH = 50000;
 let clientSpace;
 let assetList;
 
@@ -37,7 +38,18 @@ const getContentTypeName = item => {
   );
 };
 
-const getMessageFromAPIError = err => JSON.parse(err.message).message;
+export const getMessageFromAPIError = err => {
+  try {
+    const obj = JSON.parse(err.message);
+    let msg = obj.message;
+    if (obj.details && obj.details.errors.length) {
+      msg += ": " + obj.details.errors.map(o => o.details).join(",");
+    }
+    return msg;
+  } catch (e) {
+    return "(Not valid JSON)\n" + err.message;
+  }
+};
 
 /**
  * Converts a plain object of fields into a format containing language
@@ -213,13 +225,39 @@ export const createAuthor = async (user, defaultAvatar) => {
  * @param data object of post data.
  */
 export const createPost = async (post, author, tags, featuredImageAsset) => {
-  const { title, slug, body, date } = post;
+  const { title, slug, body, date, seoTitle, seoDescription } = post;
   const comments = false;
 
-  const body2 = "Lorem Ipsum dolor sit amet";
+  let bodySegments = [""];
+  let body1, body2, body3;
+  if (body.length > MAX_BODY_LENGTH) {
+    const paras = body.split("\n");
+    while (paras.length) {
+      const nextPara = paras.pop();
+      const lastSegmentPlusNextPara =
+        bodySegments[bodySegments.length - 1] + nextPara;
+      if (lastSegmentPlusNextPara.length < MAX_BODY_LENGTH) {
+        bodySegments[bodySegments.length - 1] =
+          bodySegments[bodySegments.length - 1] + nextPara;
+      } else {
+        bodySegments.push(nextPara);
+      }
+    }
+
+    [body1, body2, body3] = bodySegments;
+  }
 
   const contentType = CONTENT_TYPE_IDS.post;
-  const data = formatFields({ title, slug, body: body2, tags, date, comments });
+  const data = formatFields({
+    title,
+    slug,
+    body: body1,
+    body2,
+    body3,
+    tags,
+    date,
+    comments
+  });
 
   data.fields.author = {
     "en-US": [

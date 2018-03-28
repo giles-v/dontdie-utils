@@ -6,6 +6,7 @@ import {
   getAllAssets,
   getAllEntries,
   getAuthorWithName,
+  getMessageFromAPIError,
   getOrUploadAsset
 } from "./contentful";
 import {
@@ -50,28 +51,29 @@ const getTagArray = (post_id, tags, posts_tags) => {
 
 const importPosts = async (posts, users, tags, posts_tags) => {
   for (let post of posts) {
-    try {
-      const author = await getAuthorByGhostId(users, post.author_id);
-      const tagArray = await getTagArray(post.id, tags, posts_tags);
-      const featuredImageAsset = await getOrUploadAsset(post.image);
+    if (post.title === "jason rohrer") {
+      try {
+        const author = await getAuthorByGhostId(users, post.author_id);
+        const tagArray = await getTagArray(post.id, tags, posts_tags);
+        const featuredImageAsset = await getOrUploadAsset(post.image);
 
-      /**
-       * To fix:
-       * SEO meta
-       * Inline images
-       */
+        /**
+         * To fix:
+         * Inline images
+         */
 
-      await createPost(post, author, tagArray, featuredImageAsset);
-      console.log("  Created post", post.title);
-    } catch (e) {
-      console.log("  Failed to create post", post.title, e.message);
+        await createPost(post, author, tagArray, featuredImageAsset);
+        console.log("  Created post", post.title);
+      } catch (e) {
+        console.log("  Failed to create post", post.title, e); // getMessageFromAPIError(e));
+      }
+      return;
     }
-    return;
   }
 };
 
 async function run() {
-  const data = requireJSON("./dont-die.ghost.2018-02-12.json").db[0].data;
+  const data = requireJSON("./dont-die.ghost.2018-03-26.json").db[0].data;
 
   const posts_tags = getPostsTags(data);
   const users = getUsers(data);

@@ -33,6 +33,8 @@ export const getPosts = data =>
       mobiledoc,
       html,
       feature_image,
+      meta_title,
+      meta_description,
       published_at,
       status,
       author_id
@@ -45,6 +47,8 @@ export const getPosts = data =>
       body: resolveMarkdown(mobiledoc),
       image: resolveImage(feature_image),
       date: published_at,
+      seoTitle: meta_title,
+      seoDescription: meta_description,
       status,
       author_id
     };
