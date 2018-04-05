@@ -51,23 +51,21 @@ const getTagArray = (post_id, tags, posts_tags) => {
 
 const importPosts = async (posts, users, tags, posts_tags) => {
   for (let post of posts) {
-    if (post.title === "jason rohrer") {
-      try {
-        const author = await getAuthorByGhostId(users, post.author_id);
-        const tagArray = await getTagArray(post.id, tags, posts_tags);
-        const featuredImageAsset = await getOrUploadAsset(post.image);
+    try {
+      const author = await getAuthorByGhostId(users, post.author_id);
+      const tagArray = await getTagArray(post.id, tags, posts_tags);
+      const featuredImageAsset = await getOrUploadAsset(post.image);
 
-        /**
-         * To fix:
-         * Inline images
-         */
+      /**
+       * To fix:
+       * Pages not imported
+       * Inline images
+       */
 
-        await createPost(post, author, tagArray, featuredImageAsset);
-        console.log("  Created post", post.title);
-      } catch (e) {
-        console.log("  Failed to create post", post.title, e); // getMessageFromAPIError(e));
-      }
-      return;
+      await createPost(post, author, tagArray, featuredImageAsset);
+      console.log("  Created post", post.title);
+    } catch (e) {
+      console.log("  Failed to create post", getMessageFromAPIError(e));
     }
   }
 };

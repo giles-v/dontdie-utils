@@ -225,26 +225,30 @@ export const createAuthor = async (user, defaultAvatar) => {
  * @param data object of post data.
  */
 export const createPost = async (post, author, tags, featuredImageAsset) => {
-  const { title, slug, body, date, seoTitle, seoDescription } = post;
+  const { title, slug, date, seoTitle, seoDescription } = post;
+  let body = post.body;
   const comments = false;
+
+  body = body.replace(/#####([^\s])/g, "##### $1");
 
   let bodySegments = [""];
   let body1, body2, body3;
   if (body.length > MAX_BODY_LENGTH) {
     const paras = body.split("\n");
     while (paras.length) {
-      const nextPara = paras.pop();
+      const nextPara = paras.shift();
       const lastSegmentPlusNextPara =
-        bodySegments[bodySegments.length - 1] + nextPara;
+        bodySegments[bodySegments.length - 1] + "\n" + nextPara;
       if (lastSegmentPlusNextPara.length < MAX_BODY_LENGTH) {
-        bodySegments[bodySegments.length - 1] =
-          bodySegments[bodySegments.length - 1] + nextPara;
+        bodySegments[bodySegments.length - 1] = lastSegmentPlusNextPara;
       } else {
         bodySegments.push(nextPara);
       }
     }
 
     [body1, body2, body3] = bodySegments;
+  } else {
+    body1 = body;
   }
 
   const contentType = CONTENT_TYPE_IDS.post;
